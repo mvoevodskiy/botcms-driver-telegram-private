@@ -366,12 +366,18 @@ class TelegramPrivate {
                         }
                     })
                     .then(result => {
-                        // console.log('auth.authorization:', result);
+                        console.log('auth.authorization:', result);
                     });
 
             });
+        this.setOnline();
         await this.Transport.call('users.getFullUser', {id: {_: 'inputUserSelf'}}).then(response => {this.tgUser = response.user; console.log(response.user)});
 
+    }
+
+    setOnline = async () => {
+        await this.Transport.call('account.updateStatus', {offline: false});
+        setTimeout(this.setOnline, 5000);
     }
 
     sendCode(phone) {
