@@ -10,7 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@mtproto/core": "^3.3.0",
-    "botcms": "^1.0.22"
+    "airgram": "^3.1.1",
+    "botcms": "^1.0.22",
+    "node-gyp": "^7.0.0"
   }
 }
