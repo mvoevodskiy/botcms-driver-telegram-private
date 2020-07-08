@@ -287,8 +287,10 @@ class TelegramPrivate {
                 access_hash: hash,
                 channel_id: chatId * -1,
             }
-            let chatInfo = await this.Transport.call('channels.getFullChannel', {channel: params});
-            // console.log('FETCH CHAT INFO. FROM TG: ', chatInfo);
+            let chatInfo = await this.Transport.call('channels.getFullChannel', {channel: params})
+                .catch((e) => console.error(e));
+            console.log('FETCH CHAT INFO. FROM TG: ', chatInfo);
+            if (chatInfo) {
             try {
                 result = {
                     id: chatInfo.chats[0].id * -1,
@@ -297,8 +299,10 @@ class TelegramPrivate {
                     title: chatInfo.chats[0].title || '',
                     description: chatInfo.full_chat.about || '',
                 };
-                // console.log('FETCH CHAT INFO .', result);
-            } catch (e) {}
+                    console.log('FETCH CHAT INFO .', result);
+                } catch (e) {
+                }
+            }
         }
         return result;
     }
