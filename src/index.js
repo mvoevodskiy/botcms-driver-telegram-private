@@ -264,9 +264,10 @@ class TelegramPrivate {
             this.tgUser = {
                 id: response.response.id,
                 username: response.response.username,
-                first_name: response.response.first_name,
-                last_name: response.response.last_name,
+                first_name: response.response.firstName,
+                last_name: response.response.lastName,
             }
+            console.log(this.tgUser);
         }
     }
 
