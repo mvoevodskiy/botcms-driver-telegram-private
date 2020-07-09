@@ -250,6 +250,11 @@ class TelegramPrivate {
             code: () => this.config.code,
             phoneNumber: () => this.config.phone
         }));
+        await this.Transport.api.getChats({
+            chatList: {_: 'chatListMain'},
+            // limit: 300,
+        })
+        console.debug('TGPVT ' + this.name + ' STARTED');
         this.getMe();
     }
 
