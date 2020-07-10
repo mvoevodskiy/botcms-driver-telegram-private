@@ -89,7 +89,7 @@ class TelegramPrivate {
                     }
                 }
                 // console.log(upd);
-                console.log('MESSAGE CALLBACK. ID: ', message.id);
+                // console.log('MESSAGE CALLBACK. ID: ', message.id);
                 messageId = message.id;
                 messageText = this.MT.extract('content.text.text', message, '');
                 messageDate = message.date;
@@ -120,7 +120,7 @@ class TelegramPrivate {
         bcContext.Message.edited = edited;
         bcContext.Message.event = event;
         if (event !== '') {
-            console.log('MESSAGE CALLBACK. MSG EVENT ', event, ' ID ', messageId);
+            // console.log('MESSAGE CALLBACK. MSG EVENT ', event, ' ID ', messageId);
             if (this.config.sessionStart === true) {
                 let t = this;
                 let SM = new SessionManager({bridge: t});
@@ -168,7 +168,7 @@ class TelegramPrivate {
 
 
     async fetchUserInfo (userId, bcContext = null) {
-        console.log('FETCH USER INFO. USER ID ', userId, ' CTX MSG ID ', this.MT.extract('Message.id', bcContext));
+        // console.log('FETCH USER INFO. USER ID ', userId, ' CTX MSG ID ', this.MT.extract('Message.id', bcContext));
         let result = {id: userId};
         if (userId === this.BC.SELF_SEND || userId === 0 || userId === undefined) {
             result = {
@@ -190,7 +190,7 @@ class TelegramPrivate {
                     }))(),
                 (async () => this.Transport.api.getUserFullInfo({userId})
                     .then(response => {
-                        console.log(response.response);
+                        // console.log(response.response);
                         if (response.response._ === 'userFullInfo') {
                             result.bio = response.response.bio;
                         }
@@ -240,7 +240,7 @@ class TelegramPrivate {
                     break;
             }
             result.type = chatType;
-            console.log('FETCHED CHAT INFO .', result);
+            // console.log('FETCHED CHAT INFO .', result);
         }
         return result;
     }
