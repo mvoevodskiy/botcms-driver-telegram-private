@@ -162,7 +162,42 @@ class TelegramPrivate {
         return this.send(Parcel);
     }
 
-    async send (Parcel) {
+    async send (parcel) {
+
+        let ids = [];
+        let content = {
+            _: 'inputMessageText',
+            text: {
+                _: 'formattedText',
+                text: parcel.message,
+            }
+        };
+
+        if (parcel.fwdChatId !== 0) {
+            content = {
+                _: 'inputMessageForwarded',
+                fromChatId: parseInt(parcel.fwChatId),
+                messageId: parseInt(parcel.fwMsgIds[0]),
+                sendCopy: false,
+            }
+        }
+        let params = {
+            chatId: parcel.peerId,
+            replyToMessageId: parcel.replyMsgId,
+            inputMessageContent: content,
+
+        };
+
+        // console.log('TG PVT. SEND PARAMS', params);
+
+        let response = await this.Transport.api.sendMessage(params);
+        if (response.response._ !== 'error') {
+            ids.push(response.response.id);
+        }
+        // console.log('TG PVT SENT MESSAGES: ');
+        // console.dir(response.response, {depth: 5});
+
+        return ids;
 
     }
 
@@ -252,7 +287,7 @@ class TelegramPrivate {
         }));
         await this.Transport.api.getChats({
             chatList: {_: 'chatListMain'},
-            // limit: 300,
+            limit: 500,
         })
         console.debug('TGPVT ' + this.name + ' STARTED');
         this.getMe();
