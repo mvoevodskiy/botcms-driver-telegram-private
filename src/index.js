@@ -283,7 +283,8 @@ class TelegramPrivate {
     launch = async (middleware, ...middlewares) => {
         await this.Transport.use(new Auth({
             code: () => this.config.code,
-            phoneNumber: () => this.config.phone
+            phoneNumber: () => this.config.phone,
+            password: () => this.config.password,
         }));
         await this.Transport.api.getChats({
             chatList: {_: 'chatListMain'},
