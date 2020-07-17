@@ -194,6 +194,20 @@ class TelegramPrivate {
         let response = await this.Transport.api.sendMessage(params);
         if (response.response._ !== 'error') {
             ids.push(response.response.id);
+        } else if (response.response.code === 5 && parseInt(parcel.peerId) > 0) {
+            response = await this.Transport.api.createPrivateChat({userId: parcel.peerId});
+            // console.log('TG PVT. CREATE PRIVATE CHAT RESPONSE', response.response);
+            if (response.response._ !== 'error') {
+                await this.BC.MT.sleep(500);
+                return await this.send(parcel);
+            } else {
+                console.error('TG PVT. SEND ERROR. CREATE PRIVATE CHAT RESPONSE:');
+                console.dir(response, {depth: 5});
+            }
+
+        } else {
+            console.error('TG PVT. SEND ERROR. FIRST SEND MESSAGE RESPONSE:');
+            console.dir(response, {depth: 5});
         }
         // console.log('TG PVT SENT MESSAGES: ');
         // console.dir(response.response, {depth: 5});
