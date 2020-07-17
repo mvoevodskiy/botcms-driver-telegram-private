@@ -163,6 +163,7 @@ class TelegramPrivate {
     }
 
     async send (parcel) {
+        // console.log('TG SEND MESSAGE. IN DATA ', Parcel);
 
         let ids = [];
         let content = {
@@ -173,7 +174,7 @@ class TelegramPrivate {
             }
         };
 
-        if (parcel.fwdChatId !== 0) {
+        if (!this.BC.MT.empty(parcel.fwdChatId)) {
             content = {
                 _: 'inputMessageForwarded',
                 fromChatId: parseInt(parcel.fwChatId),
@@ -304,6 +305,8 @@ class TelegramPrivate {
                 last_name: response.response.lastName,
             }
             console.log(this.tgUser);
+        } else {
+            console.error('TG PVT', this.name, '. GET ME ERROR', response);
         }
     }
 
