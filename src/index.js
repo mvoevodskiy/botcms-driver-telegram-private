@@ -131,22 +131,31 @@ class TelegramPrivate {
         bcContext.Message.text = messageText;
         bcContext.Message.edited = edited;
         bcContext.Message.event = event;
+        let result;
         if (event !== '') {
             // console.log('MESSAGE CALLBACK. MSG EVENT ', event, ' ID ', messageId);
             if (this.config.sessionStart === true) {
                 let t = this;
                 let SM = new SessionManager({bridge: t});
                 // console.log(SM);
-                return await SM.middleware()(ctx.update, () => {
+                result = await SM.middleware()(ctx.update, async () => {
                     bcContext.session = ctx.update.session;
-                    return t.BC.handleUpdate(bcContext);
+                    await t.BC.handleUpdate(bcContext);
                 });
             } else {
                 // console.log(bcContext.session, ctx.update.session);
                 bcContext.session = {};
-                return this.BC.handleUpdate(bcContext);
+                result = await this.BC.handleUpdate(bcContext);
             }
         }
+        if (this.config.readProcessed && chatId && messageId) {
+            this.Transport.api.viewMessages({
+                chatId,
+                messageIds: [messageId],
+                forceRead: true,
+            }).then((res) => console.log(res));
+        }
+        return result;
     }
 
     listen () {
