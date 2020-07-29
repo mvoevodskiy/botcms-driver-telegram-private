@@ -97,7 +97,7 @@ class TelegramPrivate {
                 messageDate = message.date;
                 senderId = message.senderUserId;
                 chatId = message.chatId;
-                if (chatType < 0) {
+                if (parseInt(chatId) < 0) {
                     chatType = message.isChannelPost ? 'channel' : 'chat';
                 }
                 let fwSenderId = this.BC.MT.extract('forwardInfo.origin.senderUserId', message, 0);
