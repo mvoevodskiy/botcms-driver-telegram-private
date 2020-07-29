@@ -195,7 +195,7 @@ class TelegramPrivate {
             }
         };
 
-        if (parcel.fwdChatId !== '' && parcel.fwdChatId !== 0 && parcel.fwdChatId !== null) {
+        if (parcel.fwChatId !== '' && parcel.fwChatId !== 0 && parcel.fwChatId !== null) {
             content = {
                 _: 'inputMessageForwarded',
                 fromChatId: parseInt(parcel.fwChatId),
