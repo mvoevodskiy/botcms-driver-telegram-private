@@ -39,6 +39,7 @@ class TelegramPrivate {
             code: '',
             password: '',
             sessionStart: true,
+            readProcessed: true,
             // sessionHandler: SessionManager,
         };
         this.config = this.BC.MT.mergeRecursive(this.defaults, params);
@@ -52,6 +53,7 @@ class TelegramPrivate {
         };
 
         this.Transport = new Airgram(this.config);
+        console.log(this.config);
     }
 
     isAvailable () {
@@ -59,7 +61,7 @@ class TelegramPrivate {
     }
 
     async messageCallback (ctx) {
-        // console.dir(ctx.update, {depth: 5});
+        console.dir(ctx.update, {depth: 5});
 
         /** @type {Context} bcContext **/
         let bcContext = new this.BC.config.classes.Context(this.BC, this, ctx.update);
@@ -98,6 +100,16 @@ class TelegramPrivate {
                 if (chatType < 0) {
                     chatType = message.isChannelPost ? 'channel' : 'chat';
                 }
+                let fwSenderId = this.BC.MT.extract('forwardInfo.origin.senderUserId', message, 0);
+                if (fwSenderId) {
+                    bcContext.Message.handleForwarded({
+                        sender: {
+                            id: fwSenderId,
+                        },
+                        date: this.BC.MT.extract('forwardInfo.date', message, 0)
+                    });
+                }
+                // console.log(bcContext.Message.forwarded);
 
                 break;
         }
@@ -163,7 +175,7 @@ class TelegramPrivate {
     }
 
     async send (parcel) {
-        console.log('TG SEND MESSAGE. IN DATA ', parcel);
+        // console.log('TG PVT SEND MESSAGE. IN DATA ', parcel);
 
         let ids = [];
         let content = {
@@ -192,6 +204,7 @@ class TelegramPrivate {
         // console.log('TG PVT. SEND PARAMS', params);
 
         let response = await this.Transport.api.sendMessage(params);
+        // console.log('TG PVT. SEND. FIRST SEND. RESPONSE: ', response.response);
         if (response.response._ !== 'error') {
             ids.push(response.response.id);
         } else if (response.response.code === 5 && parseInt(parcel.peerId) > 0) {
