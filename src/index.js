@@ -61,7 +61,7 @@ class TelegramPrivate {
     }
 
     async messageCallback (ctx) {
-        console.dir(ctx.update, {depth: 5});
+        // console.dir(ctx.update, {depth: 5});
 
         /** @type {Context} bcContext **/
         let bcContext = new this.BC.config.classes.Context(this.BC, this, ctx.update);
