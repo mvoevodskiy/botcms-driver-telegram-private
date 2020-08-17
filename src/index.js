@@ -323,12 +323,12 @@ class TelegramPrivate {
             phoneNumber: () => this.config.phone,
             password: () => this.config.password,
         }));
+        await this.getMe();
         await this.Transport.api.getChats({
             chatList: {_: 'chatListMain'},
             limit: 500,
         })
         console.debug('TGPVT ' + this.name + ' STARTED');
-        this.getMe();
     }
 
     getMe = async () => {
