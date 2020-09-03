@@ -79,11 +79,11 @@ class TelegramPrivate {
         let messageDate = 0;
 
 
+        let message = {};
         switch (ctx.update._) {
             case 'updateNewMessage':
             // case 'updateMessageContent':
             // case 'updateChatLastMessage':
-                let message = {};
                 for (let type of ['message', 'messageContent', 'lastMessage']) {
                     if (type in ctx.update) {
                         message = ctx.update[type];
@@ -112,11 +112,32 @@ class TelegramPrivate {
                 // console.log(bcContext.Message.forwarded);
 
                 break;
+
+            case 'updateDeleteMessages':
+                for (let type of ['updateDeleteMessages']) {
+                    if (type in ctx.update) {
+                        message = ctx.update[type];
+                        break;
+                    }
+                }
+                // console.log(ctx.update, message)
+                // console.log(upd);
+                // console.log('MESSAGE CALLBACK. ID: ', message.id);
+                messageId = ctx.update.messageIds[0]
+                messageText = ''
+                messageDate = Math.round(Date.now() / 1000)
+                senderId = ctx.update.senderUserId || 0
+                chatId = ctx.update.chatId
+                event = EVENTS.MESSAGE_REMOVE
+                if (parseInt(chatId) < 0) {
+                    chatType = ctx.update.isChannelPost ? 'channel' : 'chat'
+                    event = EVENTS.CHAT_MESSAGE_REMOVE
+                }
         }
 
-        event = messageText !== ''
-            ? (chatId < 0 ? EVENTS.CHAT_MESSAGE_NEW : EVENTS.MESSAGE_NEW)
-            : '';
+        if (event === '' && messageText !== '') {
+            event = chatId < 0 ? EVENTS.CHAT_MESSAGE_NEW : EVENTS.MESSAGE_NEW
+        }
 
         bcContext.Message.chat = {
             id: chatId,
@@ -133,7 +154,7 @@ class TelegramPrivate {
         bcContext.Message.event = event;
         let result;
         if (event !== '') {
-            // console.log('MESSAGE CALLBACK. MSG EVENT ', event, ' ID ', messageId);
+            console.log('MESSAGE CALLBACK. MSG EVENT ', event, ' ID ', messageId);
             if (this.config.sessionStart === true) {
                 let t = this;
                 let SM = new SessionManager({bridge: t});
