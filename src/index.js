@@ -76,7 +76,9 @@ class TelegramPrivate {
         let chatId = 0;
         let senderId = 0;
         let messageId = 0;
+        let messageIds = [];
         let messageDate = 0;
+        let replyId = 0;
 
 
         let message = {};
@@ -99,6 +101,9 @@ class TelegramPrivate {
                 chatId = message.chatId;
                 if (parseInt(chatId) < 0) {
                     chatType = message.isChannelPost ? 'channel' : 'chat';
+                }
+                if (message.replyToMessageId) {
+                    replyId = message.replyToMessageId
                 }
                 let fwSenderId = this.BC.MT.extract('forwardInfo.origin.senderUserId', message, 0);
                 if (fwSenderId) {
@@ -124,6 +129,7 @@ class TelegramPrivate {
                 // console.log(upd);
                 // console.log('MESSAGE CALLBACK. ID: ', message.id);
                 messageId = ctx.update.messageIds[0]
+                messageIds = ctx.update.messageIds
                 messageText = ''
                 messageDate = Math.round(Date.now() / 1000)
                 senderId = ctx.update.senderUserId || 0
@@ -148,13 +154,15 @@ class TelegramPrivate {
             isBot,
         };
         bcContext.Message.id = messageId;
+        bcContext.Message.ids = messageIds;
         bcContext.Message.date = messageDate;
         bcContext.Message.text = messageText;
         bcContext.Message.edited = edited;
         bcContext.Message.event = event;
+        bcContext.Message.reply.id = replyId
         let result;
         if (event !== '') {
-            console.log('MESSAGE CALLBACK. MSG EVENT ', event, ' ID ', messageId);
+            // console.log('MESSAGE CALLBACK. MSG EVENT ', event, ' ID ', messageId);
             if (this.config.sessionStart === true) {
                 let t = this;
                 let SM = new SessionManager({bridge: t});
