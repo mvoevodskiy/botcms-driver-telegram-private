@@ -40,6 +40,10 @@ class TelegramPrivate {
             password: '',
             sessionStart: true,
             readProcessed: true,
+            alwaysOnline: false,
+            useFileDatabase: true,
+            useChatInfoDatabase: true,
+            useMessageDatabase: true
             // sessionHandler: SessionManager,
         };
         this.config = this.BC.MT.mergeRecursive(this.defaults, params);
@@ -51,9 +55,21 @@ class TelegramPrivate {
             'name': '',
             'username': '',
         };
+        this.pendingIds = {}
 
         this.Transport = new Airgram(this.config);
         console.log(this.config);
+
+        this.waitServerId = async (oldId) => {
+            if (this.pendingIds[oldId] !== undefined) {
+                let newId = this.pendingIds[oldId]
+                delete this.pendingIds[oldId]
+                return newId
+            } else {
+                await this.MT.sleep(5)
+                return this.waitServerId(oldId)
+            }
+        }
     }
 
     isAvailable () {
@@ -97,7 +113,7 @@ class TelegramPrivate {
                 messageId = message.id;
                 messageText = this.MT.extract('content.text.text', message, '');
                 messageDate = message.date;
-                senderId = message.senderUserId;
+                senderId = message.senderUserId === this.tgUser.id ? this.BC.SELF_SEND : message.senderUserId;
                 chatId = message.chatId;
                 if (parseInt(chatId) < 0) {
                     chatType = message.isChannelPost ? 'channel' : 'chat';
@@ -119,6 +135,9 @@ class TelegramPrivate {
                 break;
 
             case 'updateDeleteMessages':
+                if (ctx.update.fromCache) {
+                    return
+                }
                 for (let type of ['updateDeleteMessages']) {
                     if (type in ctx.update) {
                         message = ctx.update[type];
@@ -192,7 +211,20 @@ class TelegramPrivate {
             if ('update' in ctx) {
                 // console.log('TG PVT HANDLE UPDATE. CONSTRUCTOR ', ctx.update._, ' MSG ID ', this.MT.extract('update.message.id', ctx));
                 // console.log(`[all updates][${ctx._}]`, JSON.stringify(ctx.update));
-                await this.messageCallback(ctx);
+                let oldId = 0
+                if (ctx.update._ === 'updateMessageSendSucceeded') {
+                    // console.log('UPDATE MESSAGE SEND SUCCEEDED', ctx.update)
+                    ctx.update._ = 'updateNewMessage'
+                    oldId = ctx.update.oldMessageId
+                }
+                let state = this.MT.extract('message.sendingState', ctx.update, null)
+                // console.log('SENDING STATE', state, )
+                if (!state) {
+                    await this.messageCallback(ctx);
+                }
+                if (oldId) {
+                    this.pendingIds[oldId] = ctx.update.message.id
+                }
             }
             return next()
         })
@@ -239,12 +271,30 @@ class TelegramPrivate {
 
         };
 
+        let method = 'sendMessage'
+        let waitId = true
+        if (parcel.editMsgId !== 0) {
+            waitId = false
+            await this.Transport.api.getMessage({
+                messageId: parseInt(parcel.editMsgId),
+                chatId: parcel.peerId
+            })
+            // console.log('GET MESSAGE RESPONSE')
+            // console.dir(getMsgResponse.response.messages, {depth: 5})
+            method = 'editMessageText'
+            params.messageId = parcel.editMsgId
+        }
+
         // console.log('TG PVT. SEND PARAMS', params);
 
-        let response = await this.Transport.api.sendMessage(params);
+        let response = await this.Transport.api[method](params);
         // console.log('TG PVT. SEND. FIRST SEND. RESPONSE: ', response.response);
         if (response.response._ !== 'error') {
-            ids.push(response.response.id);
+            let id = response.response.id
+            if (waitId) {
+                id = await this.waitServerId(id)
+            }
+            ids.push(id)
         } else if (response.response.code === 5 && parseInt(parcel.peerId) > 0) {
             response = await this.Transport.api.createPrivateChat({userId: parcel.peerId});
             // console.log('TG PVT. CREATE PRIVATE CHAT RESPONSE', response.response);
@@ -255,7 +305,6 @@ class TelegramPrivate {
                 console.error('TG PVT. SEND ERROR. CREATE PRIVATE CHAT RESPONSE:');
                 console.dir(response, {depth: 5});
             }
-
         } else {
             console.error('TG PVT. SEND ERROR. FIRST SEND MESSAGE RESPONSE:');
             console.dir(response, {depth: 5});
