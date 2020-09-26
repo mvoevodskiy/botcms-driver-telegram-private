@@ -247,14 +247,26 @@ class TelegramPrivate {
     async send (parcel) {
         // console.log('TG PVT SEND MESSAGE. IN DATA ', parcel);
 
-        let ids = [];
-        let content = {
-            _: 'inputMessageText',
-            text: {
-                _: 'formattedText',
-                text: parcel.message,
+        let text = {
+            _: 'formattedText',
+            text: parcel.message,
+        }
+        if (typeof parcel.message === 'object') {
+            let parseMode = { _: 'textParseModeHTML' }
+            if (parcel.message.markup === 'md') {
+                parseMode = { _: 'textParseModeMarkdown', version: 2 }
             }
-        };
+            const format = await this.Transport.api.parseTextEntities({ text: parcel.message.text, parseMode })
+            if (format.response._ === 'formattedText') {
+                text = format.response
+            } else {
+                console.error('TG PVT. ERROR PARSE FORMATTED TEXT:', format.response.message)
+                console.error('TG PVT. PARSE REQUEST TEXT', format.request.params.text)
+            }
+        }
+
+        let ids = [];
+        let content = { _: 'inputMessageText', text };
 
         if (parcel.fwChatId !== '' && parcel.fwChatId !== 0 && parcel.fwChatId !== null) {
             content = {
