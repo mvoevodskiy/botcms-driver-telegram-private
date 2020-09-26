@@ -418,6 +418,9 @@ class TelegramPrivate {
             chatList: {_: 'chatListMain'},
             limit: 500,
         })
+        if (this.config.alwaysOnline) {
+            this.setOnline()
+        }
         console.debug('TGPVT ' + this.name + ' STARTED');
     }
 
@@ -437,7 +440,13 @@ class TelegramPrivate {
     }
 
     setOnline = async () => {
-        await this.Transport.call('account.updateStatus', {offline: false});
+        await this.Transport.api.setOption({
+            name: 'online',
+            value: {
+                _: 'optionValueBoolean',
+                value: true
+            }
+        });
         setTimeout(this.setOnline, 5000);
     }
 
