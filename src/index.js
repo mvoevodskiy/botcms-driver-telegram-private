@@ -72,6 +72,16 @@ class TelegramPrivate {
         }
     }
 
+    /* @deprecated */
+    get tgUser () {
+        return this.user
+    }
+
+    /* @deprecated */
+    set tgUser (user) {
+        this.user = user
+    }
+
     isAvailable () {
         return typeof this.Transport === 'object';
     }
