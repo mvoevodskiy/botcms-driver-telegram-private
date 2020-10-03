@@ -58,7 +58,7 @@ class TelegramPrivate {
         this.pendingIds = {}
 
         this.Transport = new Airgram(this.config);
-        console.log(this.config);
+        // console.log(this.config);
 
         this.waitServerId = async (oldId) => {
             if (this.pendingIds[oldId] !== undefined) {
@@ -90,7 +90,7 @@ class TelegramPrivate {
         // console.dir(ctx.update, {depth: 5});
 
         /** @type {Context} bcContext **/
-        let bcContext = new this.BC.config.classes.Context(this.BC, this, ctx.update);
+        let bcContext = new this.BC.config.classes.Context(this.BC, this, ctx.update, {useSession: this.config.sessionStart});
 
         let EVENTS = bcContext.Message.EVENTS;
         let event = '';
@@ -192,19 +192,7 @@ class TelegramPrivate {
         let result;
         if (event !== '') {
             // console.log('MESSAGE CALLBACK. MSG EVENT ', event, ' ID ', messageId);
-            if (this.config.sessionStart === true) {
-                let t = this;
-                let SM = new SessionManager({bridge: t});
-                // console.log(SM);
-                result = await SM.middleware()(ctx.update, async () => {
-                    bcContext.session = ctx.update.session;
-                    await t.BC.handleUpdate(bcContext);
-                });
-            } else {
-                // console.log(bcContext.session, ctx.update.session);
-                bcContext.session = {};
-                result = await this.BC.handleUpdate(bcContext);
-            }
+            result = await ctx.process()
         }
         if (this.config.readProcessed && chatId && messageId) {
             this.Transport.api.viewMessages({
