@@ -217,10 +217,14 @@ class TelegramPrivate {
                     ctx.update._ = 'updateNewMessage'
                     oldId = ctx.update.oldMessageId
                 }
-                let state = this.MT.extract('message.sendingState', ctx.update, null)
-                // console.log('SENDING STATE', state, )
-                if (!state) {
-                    await this.messageCallback(ctx);
+                if (ctx.update._ === 'updateMessageSendFailed') {
+                    oldId = ctx.update.oldMessageId
+                } else {
+                    let state = this.MT.extract('message.sendingState', ctx.update, null)
+                    // console.log('SENDING STATE', state, )
+                    if (!state) {
+                        await this.messageCallback(ctx);
+                    }
                 }
                 if (oldId) {
                     this.pendingIds[oldId] = ctx.update.message.id
@@ -273,7 +277,7 @@ class TelegramPrivate {
                 _: 'inputMessageForwarded',
                 fromChatId: parseInt(parcel.fwChatId),
                 messageId: parseInt(parcel.fwMsgIds[0]),
-                sendCopy: false,
+                sendCopy: true,
             }
         }
         let params = {
@@ -285,7 +289,7 @@ class TelegramPrivate {
 
         let method = 'sendMessage'
         let waitId = true
-        if (parcel.editMsgId !== 0) {
+        if (parcel.editMsgId !== 0 && parcel.editMsgId !== undefined) {
             waitId = false
             await this.Transport.api.getMessage({
                 messageId: parseInt(parcel.editMsgId),
@@ -299,7 +303,10 @@ class TelegramPrivate {
 
         // console.log('TG PVT. SEND PARAMS', params);
 
-        let response = await this.Transport.api[method](params);
+        let response = await this.Transport.api[method](params).catch((e) => {
+            console.error('ERROR IN TG PVT', this.name, 'WHILE', method, ':', e)
+            return {response: {}}
+        });
         // console.log('TG PVT. SEND. FIRST SEND. RESPONSE: ', response.response);
         if (response.response._ !== 'error') {
             let id = response.response.id
