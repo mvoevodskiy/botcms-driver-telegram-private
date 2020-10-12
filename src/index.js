@@ -140,7 +140,31 @@ class TelegramPrivate {
                         date: this.BC.MT.extract('forwardInfo.date', message, 0)
                     });
                 }
+                switch (message.content._) {
+                    case 'messagePhoto':
+                        console.dir(message.content.photo, {depth: 5});
+                        messageText = this.MT.extract('content.caption.text', message, '');
+                        let sizes = {}
+                        for (let size of message.content.photo.sizes) {
+                            sizes[size.type] = size
+                        }
+                        let attachment
+                        for (let type of ['w', 'y', 'x', 'm', 's', 'd', 'c', 'b', 'a']) {
+                            if (type in sizes) {
+                                attachment = {
+                                    type: this.BC.ATTACHMENTS.PHOTO,
+                                    id: sizes[type].photo.remote.uniqueId,
+                                    width: sizes[type].width,
+                                    height: sizes[type].height,
+                                    fileSize: sizes[type].photo.size
+                                }
+                                break;
+                            }
+                        }
+                        bcContext.Message.handleAttachment(attachment)
+                }
                 // console.log(bcContext.Message.forwarded);
+                // console.log(bcContext.Message.attachments.photo);
 
                 break;
 
