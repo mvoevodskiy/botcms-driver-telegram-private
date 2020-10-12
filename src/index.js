@@ -311,7 +311,7 @@ class TelegramPrivate {
                 _: 'inputMessageForwarded',
                 fromChatId: parseInt(parcel.fwChatId),
                 messageId: parseInt(parcel.fwMsgIds[0]),
-                sendCopy: true,
+                sendCopy: false,
             }
         }
         let params = {
