@@ -142,7 +142,7 @@ class TelegramPrivate {
                 }
                 switch (message.content._) {
                     case 'messagePhoto':
-                        console.dir(message.content.photo, {depth: 5});
+                        // console.dir(message.content.photo, {depth: 5});
                         messageText = this.MT.extract('content.caption.text', message, '');
                         let sizes = {}
                         for (let size of message.content.photo.sizes) {
