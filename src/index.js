@@ -139,6 +139,7 @@ class TelegramPrivate {
                         },
                         date: this.BC.MT.extract('forwardInfo.date', message, 0)
                     });
+                    bcContext.Message.author.id = fwSenderId
                 }
                 switch (message.content._) {
                     case 'messagePhoto':
