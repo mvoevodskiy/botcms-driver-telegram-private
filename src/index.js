@@ -123,7 +123,9 @@ class TelegramPrivate {
                 messageId = message.id;
                 messageText = this.MT.extract('content.text.text', message, '');
                 messageDate = message.date;
-                senderId = message.senderUserId === this.tgUser.id ? this.BC.SELF_SEND : message.senderUserId;
+                senderId = message.sender.userId === this.tgUser.id ?
+                  this.BC.SELF_SEND :
+                  (message.sender._ === 'messageSenderUser' ? message.sender.userId : 0);
                 chatId = message.chatId;
                 if (parseInt(chatId) < 0) {
                     chatType = message.isChannelPost ? 'channel' : 'chat';
