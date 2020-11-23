@@ -63,7 +63,7 @@ class TelegramPrivate {
     }
 
     this.waitUser = async (n = 0) => {
-      if (n % 500 === 0) console.debug('TGPVT WAITING USER (getMe)')
+      if (n > 0 && n % 500 === 0) console.debug('TGPVT', this.name, 'WAITING USER (getMe). CURRENT ID:', this.user.id, 'N:', n)
       if (this.user.id !== 0) {
         return this.user
       } else {
