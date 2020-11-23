@@ -89,6 +89,7 @@ class TelegramPrivate {
   async messageCallback (ctx) {
     // console.dir(ctx.update, {depth: 5});
 
+    await this.waitUser()
     const ctxConfig = {
       useSession: this.config.sessionStart
     }
@@ -129,7 +130,7 @@ class TelegramPrivate {
         messageId = message.id
         messageText = this.MT.extract('content.text.text', message, '')
         messageDate = message.date
-        senderId = message.sender.userId === this.tgUser.id
+        senderId = message.sender.userId === this.user.id
           ? this.BC.SELF_SEND
           : (message.sender._ === 'messageSenderUser' ? message.sender.userId : 0)
         chatId = message.chatId
@@ -368,10 +369,10 @@ class TelegramPrivate {
     await this.waitUser()
     if (userId === this.BC.SELF_SEND || userId === 0 || userId === undefined) {
       result = {
-        id: this.tgUser.id,
-        username: this.tgUser.username,
-        first_name: this.tgUser.first_name,
-        last_name: this.tgUser.last_name
+        id: this.user.id,
+        username: this.user.username,
+        first_name: this.user.first_name,
+        last_name: this.user.last_name
       }
     } else {
       await Promise.all([
@@ -460,13 +461,13 @@ class TelegramPrivate {
   async getMe () {
     const response = await this.Transport.api.getMe()
     if (response.response._ === 'user') {
-      this.tgUser = {
+      this.user = {
         id: response.response.id,
         username: response.response.username,
         first_name: response.response.firstName,
         last_name: response.response.lastName
       }
-      console.log(this.tgUser)
+      console.log(this.user)
     } else {
       console.error('TG PVT', this.name, '. GET ME ERROR', response)
     }
