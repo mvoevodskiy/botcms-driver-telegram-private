@@ -61,6 +61,15 @@ class TelegramPrivate {
         return this.waitServerId(oldId)
       }
     }
+
+    this.waitUser = async () => {
+      if (this.user.id !== 0) {
+        return this.user
+      } else {
+        await this.MT.sleep(5)
+        return this.waitServerId()
+      }
+    }
   }
 
   /* @deprecated */
@@ -356,6 +365,7 @@ class TelegramPrivate {
   async fetchUserInfo (userId, bcContext = null) {
     // console.log('FETCH USER INFO. USER ID ', userId, ' CTX MSG ID ', this.MT.extract('Message.id', bcContext));
     let result = { id: userId }
+    await this.waitUser()
     if (userId === this.BC.SELF_SEND || userId === 0 || userId === undefined) {
       result = {
         id: this.tgUser.id,
