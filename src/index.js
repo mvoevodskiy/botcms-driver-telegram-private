@@ -1,8 +1,6 @@
 const { Airgram, Auth, toObject } = require('airgram');
 const Context = require('botcms/lib/context');
 const BotCMS = require('botcms');
-const SessionManager = require('./sessionmanager');
-
 
 /** TelegramPrivate driver
  * @class
@@ -28,7 +26,6 @@ class TelegramPrivate {
             name: 'tgpvt',
             driverName: 'tgpvt',
             humanName: 'TelegramPrivate',
-            storage: 'telegram_private_db.json',
             apiId: '1231858',
             apiHash: '43cfa584b32fbccb43cc89e636c3dc75',
             testMode: false,
@@ -89,8 +86,11 @@ class TelegramPrivate {
     async messageCallback (ctx) {
         // console.dir(ctx.update, {depth: 5});
 
+        let ctxConfig = {
+            useSession: this.config.sessionStart
+        }
         /** @type {Context} bcContext **/
-        let bcContext = new this.BC.config.classes.Context(this.BC, this, ctx.update);
+        let bcContext = new this.BC.config.classes.Context(this.BC, this, ctx.update, ctxConfig);
 
         let EVENTS = bcContext.Message.EVENTS;
         let event = '';
@@ -219,19 +219,7 @@ class TelegramPrivate {
         let result;
         if (event !== '') {
             // console.log('MESSAGE CALLBACK. MSG EVENT ', event, ' ID ', messageId);
-            if (this.config.sessionStart === true) {
-                let t = this;
-                let SM = new SessionManager({bridge: t});
-                // console.log(SM);
-                result = await SM.middleware()(ctx.update, async () => {
-                    bcContext.session = ctx.update.session;
-                    await t.BC.handleUpdate(bcContext);
-                });
-            } else {
-                // console.log(bcContext.session, ctx.update.session);
-                bcContext.session = {};
-                result = await this.BC.handleUpdate(bcContext);
-            }
+            result = bcContext.process()
         }
         if (this.config.readProcessed && chatId && messageId) {
             this.Transport.api.viewMessages({
