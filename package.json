@@ -10,7 +10,8 @@
   "author": "",
   "license": "ISC",
   "peerDependencies": {
-    "botcms": "^1.1.0-alpha.5"
+    "botcms": "^1.1.0-alpha.5",
+    "mvtools": "^1.0.18"
   },
   "dependencies": {
     "airgram": "^3.2.2",

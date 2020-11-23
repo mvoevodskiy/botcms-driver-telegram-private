@@ -1,6 +1,5 @@
 const { Airgram, Auth } = require('airgram')
 const Context = require('botcms/lib/context')
-const BotCMS = require('botcms')
 
 /** TelegramPrivate driver
  * @class
@@ -9,14 +8,14 @@ const BotCMS = require('botcms')
  * @property {string} driverName
  * @property {string} name
  *
- * @property {BotCMS} BC
+ * @property {Object<import('botcms')>} BC
+ * @property {Object<import('mvtools')>} BC.MT
  * @property {Airgram} Transport
  */
 
 class TelegramPrivate {
 
   config = {}
-  /** @type {BotCMS} */
   BC = null
 
   constructor (BC, params = {}) {
@@ -55,7 +54,7 @@ class TelegramPrivate {
     this.pendingIds = {}
 
     this.Transport = new Airgram(this.config)
-    console.log(this.config)
+    // console.log(this.config)
 
     this.waitServerId = async (oldId) => {
       if (this.pendingIds[oldId] !== undefined) {
