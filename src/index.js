@@ -1,5 +1,4 @@
 const { Airgram, Auth } = require('airgram')
-const Context = require('botcms/lib/context')
 
 /** TelegramPrivate driver
  * @class
@@ -14,10 +13,6 @@ const Context = require('botcms/lib/context')
  */
 
 class TelegramPrivate {
-
-  config = {}
-  BC = null
-
   constructor (BC, params = {}) {
     this.BC = BC
     this.MT = this.BC.MT
@@ -47,9 +42,9 @@ class TelegramPrivate {
     this.driverName = this.config.driverName
     this.humanName = this.config.humanName
     this.user = {
-      'id': 0,
-      'name': '',
-      'username': '',
+      id: 0,
+      name: '',
+      username: ''
     }
     this.pendingIds = {}
 
@@ -58,7 +53,7 @@ class TelegramPrivate {
 
     this.waitServerId = async (oldId) => {
       if (this.pendingIds[oldId] !== undefined) {
-        let newId = this.pendingIds[oldId]
+        const newId = this.pendingIds[oldId]
         delete this.pendingIds[oldId]
         return newId
       } else {
@@ -85,16 +80,16 @@ class TelegramPrivate {
   async messageCallback (ctx) {
     // console.dir(ctx.update, {depth: 5});
 
-    let ctxConfig = {
+    const ctxConfig = {
       useSession: this.config.sessionStart
     }
-    /** @type {Context} bcContext **/
-    let bcContext = new this.BC.config.classes.Context(this.BC, this, ctx.update, ctxConfig)
+    /** @type {Object.<import('botcms').Context>} **/
+    const bcContext = new this.BC.config.classes.Context(this.BC, this, ctx.update, ctxConfig)
 
-    let EVENTS = bcContext.Message.EVENTS
+    const EVENTS = bcContext.Message.EVENTS
     let event = ''
-    let edited = false
-    let isBot = false
+    const edited = false
+    const isBot = false
     let chatType = 'user'
     let messageText = ''
 
@@ -106,11 +101,15 @@ class TelegramPrivate {
     let replyId = 0
 
     let message = {}
+    let fwSenderId
+    let attachment
+    const sizes = {}
+
     switch (ctx.update._) {
       case 'updateNewMessage':
         // case 'updateMessageContent':
         // case 'updateChatLastMessage':
-        for (let type of ['message', 'messageContent', 'lastMessage']) {
+        for (const type of ['message', 'messageContent', 'lastMessage']) {
           if (type in ctx.update) {
             message = ctx.update[type]
             break
@@ -121,9 +120,9 @@ class TelegramPrivate {
         messageId = message.id
         messageText = this.MT.extract('content.text.text', message, '')
         messageDate = message.date
-        senderId = message.sender.userId === this.tgUser.id ?
-          this.BC.SELF_SEND :
-          (message.sender._ === 'messageSenderUser' ? message.sender.userId : 0)
+        senderId = message.sender.userId === this.tgUser.id
+          ? this.BC.SELF_SEND
+          : (message.sender._ === 'messageSenderUser' ? message.sender.userId : 0)
         chatId = message.chatId
         if (parseInt(chatId) < 0) {
           chatType = message.isChannelPost ? 'channel' : 'chat'
@@ -131,11 +130,11 @@ class TelegramPrivate {
         if (message.replyToMessageId) {
           replyId = message.replyToMessageId
         }
-        let fwSenderId = this.BC.MT.extract('forwardInfo.origin.senderUserId', message, 0)
+        fwSenderId = this.BC.MT.extract('forwardInfo.origin.senderUserId', message, 0)
         if (fwSenderId) {
           bcContext.Message.handleForwarded({
             sender: {
-              id: fwSenderId,
+              id: fwSenderId
             },
             date: this.BC.MT.extract('forwardInfo.date', message, 0)
           })
@@ -145,12 +144,10 @@ class TelegramPrivate {
           case 'messagePhoto':
             // console.dir(message.content.photo, {depth: 5});
             messageText = this.MT.extract('content.caption.text', message, '')
-            let sizes = {}
-            for (let size of message.content.photo.sizes) {
+            for (const size of message.content.photo.sizes) {
               sizes[size.type] = size
             }
-            let attachment
-            for (let type of ['w', 'y', 'x', 'm', 's', 'd', 'c', 'b', 'a']) {
+            for (const type of ['w', 'y', 'x', 'm', 's', 'd', 'c', 'b', 'a']) {
               if (type in sizes) {
                 attachment = {
                   type: this.BC.ATTACHMENTS.PHOTO,
@@ -173,7 +170,7 @@ class TelegramPrivate {
         if (ctx.update.fromCache) {
           return
         }
-        for (let type of ['updateDeleteMessages']) {
+        for (const type of ['updateDeleteMessages']) {
           if (type in ctx.update) {
             message = ctx.update[type]
             break
@@ -201,11 +198,11 @@ class TelegramPrivate {
 
     bcContext.Message.chat = {
       id: chatId,
-      type: chatType,
+      type: chatType
     }
     bcContext.Message.sender = {
       id: senderId,
-      isBot,
+      isBot
     }
     bcContext.Message.id = messageId
     bcContext.Message.ids = messageIds
@@ -223,8 +220,8 @@ class TelegramPrivate {
       this.Transport.api.viewMessages({
         chatId,
         messageIds: [messageId],
-        forceRead: true,
-      }).then(/*(res) => console.log(res)*/)
+        forceRead: true
+      }).then(/* (res) => console.log(res) */)
     }
     return result
   }
@@ -243,7 +240,7 @@ class TelegramPrivate {
         if (ctx.update._ === 'updateMessageSendFailed') {
           oldId = ctx.update.oldMessageId
         } else {
-          let state = this.MT.extract('message.sendingState', ctx.update, null)
+          const state = this.MT.extract('message.sendingState', ctx.update, null)
           // console.log('SENDING STATE', state, )
           if (!state) {
             await this.messageCallback(ctx)
@@ -275,7 +272,7 @@ class TelegramPrivate {
 
     let text = {
       _: 'formattedText',
-      text: parcel.message,
+      text: parcel.message
     }
     if (typeof parcel.message === 'object') {
       let parseMode = { _: 'textParseModeHTML' }
@@ -291,7 +288,7 @@ class TelegramPrivate {
       }
     }
 
-    let ids = []
+    const ids = []
     let content = { _: 'inputMessageText', text }
 
     if (parcel.fwChatId !== '' && parcel.fwChatId !== 0 && parcel.fwChatId !== null) {
@@ -299,13 +296,13 @@ class TelegramPrivate {
         _: 'inputMessageForwarded',
         fromChatId: parseInt(parcel.fwChatId),
         messageId: parseInt(parcel.fwMsgIds[0]),
-        sendCopy: false,
+        sendCopy: false
       }
     }
-    let params = {
+    const params = {
       chatId: parcel.peerId,
       replyToMessageId: parcel.replyMsgId,
-      inputMessageContent: content,
+      inputMessageContent: content
 
     }
 
@@ -354,7 +351,6 @@ class TelegramPrivate {
     // console.dir(response.response, {depth: 5});
 
     return ids
-
   }
 
   async fetchUserInfo (userId, bcContext = null) {
@@ -365,10 +361,9 @@ class TelegramPrivate {
         id: this.tgUser.id,
         username: this.tgUser.username,
         first_name: this.tgUser.first_name,
-        last_name: this.tgUser.last_name,
+        last_name: this.tgUser.last_name
       }
     } else {
-
       await Promise.all([
         (async () => this.Transport.api.getUser({ userId })
           .then(response => {
@@ -384,18 +379,18 @@ class TelegramPrivate {
             if (response.response._ === 'userFullInfo') {
               result.bio = response.response.bio
             }
-          }))(),
+          }))()
       ])
     }
     return result
   }
 
   async fetchChatInfo (chatId, bcContext = null) {
-    let result = { id: chatId }
-    let response = await this.Transport.api.getChat({ chatId })
+    const result = { id: chatId }
+    const response = await this.Transport.api.getChat({ chatId })
       .catch((e) => console.error(e))
     if (response.response._ === 'chat') {
-      let chat = response.response
+      const chat = response.response
       result.title = chat.title
       let chatType = 'user'
       switch (chat.type._) {
@@ -421,7 +416,7 @@ class TelegramPrivate {
                 if (response.response._ === 'supergroupFullInfo') {
                   result.description = response.response.description
                 }
-              }))(),
+              }))()
           ])
 
           break
@@ -435,31 +430,31 @@ class TelegramPrivate {
     return result
   }
 
-  launch = async () => {
+  async launch () {
     await this.Transport.use(new Auth({
       code: () => this.config.code,
       phoneNumber: () => this.config.phone,
-      password: () => this.config.password,
+      password: () => this.config.password
     }))
     await this.getMe()
     await this.Transport.api.getChats({
       chatList: { _: 'chatListMain' },
-      limit: 500,
+      limit: 500
     })
     if (this.config.alwaysOnline) {
-      this.setOnline()
+      setTimeout(this.setOnline, 0)
     }
     console.debug('TGPVT ' + this.name + ' STARTED')
   }
 
-  getMe = async () => {
-    let response = await this.Transport.api.getMe()
+  async getMe () {
+    const response = await this.Transport.api.getMe()
     if (response.response._ === 'user') {
       this.tgUser = {
         id: response.response.id,
         username: response.response.username,
         first_name: response.response.firstName,
-        last_name: response.response.lastName,
+        last_name: response.response.lastName
       }
       console.log(this.tgUser)
     } else {
@@ -467,7 +462,7 @@ class TelegramPrivate {
     }
   }
 
-  setOnline = async () => {
+  async setOnline () {
     await this.Transport.api.setOption({
       name: 'online',
       value: {
@@ -483,16 +478,15 @@ class TelegramPrivate {
       return this.Transport.call('auth.sendCode', {
         phone_number: phone,
         settings: {
-          _: 'codeSettings',
-        },
+          _: 'codeSettings'
+        }
       })
     } else {
       return Promise.resolve({
-        phone_code_hash: this.config.phoneCodeHash,
+        phone_code_hash: this.config.phoneCodeHash
       })
     }
   }
-
 }
 
 module.exports = Object.assign(TelegramPrivate, { Instagram: TelegramPrivate })
