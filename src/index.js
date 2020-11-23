@@ -62,12 +62,14 @@ class TelegramPrivate {
       }
     }
 
-    this.waitUser = async () => {
+    this.waitUser = async (n = 0) => {
+      if (n % 500 === 0) console.debug('TGPVT WAITING USER (getMe)')
       if (this.user.id !== 0) {
         return this.user
       } else {
         await this.MT.sleep(5)
-        return this.waitServerId()
+        n++
+        return this.waitUser(n)
       }
     }
   }
@@ -89,7 +91,6 @@ class TelegramPrivate {
   async messageCallback (ctx) {
     // console.dir(ctx.update, {depth: 5});
 
-    await this.waitUser()
     const ctxConfig = {
       useSession: this.config.sessionStart
     }
@@ -119,6 +120,7 @@ class TelegramPrivate {
       case 'updateNewMessage':
         // case 'updateMessageContent':
         // case 'updateChatLastMessage':
+        await this.waitUser()
         for (const type of ['message', 'messageContent', 'lastMessage']) {
           if (type in ctx.update) {
             message = ctx.update[type]
