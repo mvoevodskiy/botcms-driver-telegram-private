@@ -90,152 +90,159 @@ class TelegramPrivate {
 
   async messageCallback (ctx) {
     // console.dir(ctx.update, {depth: 5});
+    try {
+      const ctxConfig = {
+        useSession: this.config.sessionStart
+      }
+      /** @type {Object.<import('botcms').Context>} **/
+      const bcContext = new this.BC.config.classes.Context(this.BC, this, ctx.update, ctxConfig)
 
-    const ctxConfig = {
-      useSession: this.config.sessionStart
-    }
-    /** @type {Object.<import('botcms').Context>} **/
-    const bcContext = new this.BC.config.classes.Context(this.BC, this, ctx.update, ctxConfig)
+      const EVENTS = bcContext.Message.EVENTS
+      let event = ''
+      const edited = false
+      const isBot = false
+      let chatType = 'user'
+      let messageText = ''
 
-    const EVENTS = bcContext.Message.EVENTS
-    let event = ''
-    const edited = false
-    const isBot = false
-    let chatType = 'user'
-    let messageText = ''
+      let chatId = 0
+      let senderId = 0
+      let messageId = 0
+      let messageIds = []
+      let messageDate = 0
+      let replyId = 0
 
-    let chatId = 0
-    let senderId = 0
-    let messageId = 0
-    let messageIds = []
-    let messageDate = 0
-    let replyId = 0
+      let message = {}
+      let fwSenderId
+      let attachment
+      const sizes = {}
 
-    let message = {}
-    let fwSenderId
-    let attachment
-    const sizes = {}
-
-    switch (ctx.update._) {
-      case 'updateNewMessage':
-        // case 'updateMessageContent':
-        // case 'updateChatLastMessage':
-        await this.waitUser()
-        for (const type of ['message', 'messageContent', 'lastMessage']) {
-          if (type in ctx.update) {
-            message = ctx.update[type]
-            break
-          }
-        }
-        // console.log(upd);
-        // console.log('MESSAGE CALLBACK. ID: ', message.id);
-        messageId = message.id
-        messageText = this.MT.extract('content.text.text', message, '')
-        messageDate = message.date
-        senderId = message.sender.userId === this.user.id
-          ? this.BC.SELF_SEND
-          : (message.sender._ === 'messageSenderUser' ? message.sender.userId : 0)
-        chatId = message.chatId
-        if (parseInt(chatId) < 0) {
-          chatType = message.isChannelPost ? 'channel' : 'chat'
-        }
-        if (message.replyToMessageId) {
-          replyId = message.replyToMessageId
-        }
-        fwSenderId = this.BC.MT.extract('forwardInfo.origin.senderUserId', message, 0)
-        if (fwSenderId) {
-          bcContext.Message.handleForwarded({
-            sender: {
-              id: fwSenderId
-            },
-            date: this.BC.MT.extract('forwardInfo.date', message, 0)
-          })
-          bcContext.Message.author.id = fwSenderId
-        }
-        switch (message.content._) {
-          case 'messagePhoto':
-            // console.dir(message.content.photo, {depth: 5});
-            messageText = this.MT.extract('content.caption.text', message, '')
-            for (const size of message.content.photo.sizes) {
-              sizes[size.type] = size
+      switch (ctx.update._) {
+        case 'updateNewMessage':
+          // case 'updateMessageContent':
+          // case 'updateChatLastMessage':
+          await this.waitUser()
+          for (const type of ['message', 'messageContent', 'lastMessage']) {
+            if (type in ctx.update) {
+              message = ctx.update[type]
+              break
             }
-            for (const type of ['w', 'y', 'x', 'm', 's', 'd', 'c', 'b', 'a']) {
-              if (type in sizes) {
-                attachment = {
-                  type: this.BC.ATTACHMENTS.PHOTO,
-                  id: sizes[type].photo.remote.uniqueId,
-                  width: sizes[type].width,
-                  height: sizes[type].height,
-                  fileSize: sizes[type].photo.size
-                }
-                break
+          }
+          // console.log(upd);
+          // console.log('MESSAGE CALLBACK. ID: ', message.id);
+          messageId = message.id
+          messageText = this.MT.extract('content.text.text', message, '')
+          messageDate = message.date
+          senderId = message.sender.userId === this.user.id
+            ? this.BC.SELF_SEND
+            : (message.sender._ === 'messageSenderUser' ? message.sender.userId : 0)
+          chatId = message.chatId
+          if (parseInt(chatId) < 0) {
+            chatType = message.isChannelPost ? 'channel' : 'chat'
+          }
+          if (message.replyToMessageId) {
+            replyId = message.replyToMessageId
+          }
+          fwSenderId = this.BC.MT.extract('forwardInfo.origin.senderUserId', message, 0)
+          if (fwSenderId) {
+            bcContext.Message.handleForwarded({
+              sender: {
+                id: fwSenderId
+              },
+              date: this.BC.MT.extract('forwardInfo.date', message, 0)
+            })
+            bcContext.Message.author.id = fwSenderId
+          }
+          switch (message.content._) {
+            case 'messagePhoto':
+              // console.dir(message.content.photo, {depth: 5});
+              messageText = this.MT.extract('content.caption.text', message, '')
+              for (const size of message.content.photo.sizes) {
+                sizes[size.type] = size
               }
-            }
-            bcContext.Message.handleAttachment(attachment)
-        }
-        // console.log(bcContext.Message.forwarded);
-        // console.log(bcContext.Message.attachments.photo);
-
-        break
-
-      case 'updateDeleteMessages':
-        if (ctx.update.fromCache) {
-          return
-        }
-        for (const type of ['updateDeleteMessages']) {
-          if (type in ctx.update) {
-            message = ctx.update[type]
-            break
+              for (const type of ['w', 'y', 'x', 'm', 's', 'd', 'c', 'b', 'a']) {
+                if (type in sizes) {
+                  attachment = {
+                    type: this.BC.ATTACHMENTS.PHOTO,
+                    id: sizes[type].photo.remote.uniqueId,
+                    width: sizes[type].width,
+                    height: sizes[type].height,
+                    fileSize: sizes[type].photo.size
+                  }
+                  break
+                }
+              }
+              bcContext.Message.handleAttachment(attachment)
           }
-        }
-        // console.log(ctx.update, message)
-        // console.log(upd);
-        // console.log('MESSAGE CALLBACK. ID: ', message.id);
-        messageId = ctx.update.messageIds[0]
-        messageIds = ctx.update.messageIds
-        messageText = ''
-        messageDate = Math.round(Date.now() / 1000)
-        senderId = ctx.update.senderUserId || 0
-        chatId = ctx.update.chatId
-        event = EVENTS.MESSAGE_REMOVE
-        if (parseInt(chatId) < 0) {
-          chatType = ctx.update.isChannelPost ? 'channel' : 'chat'
-          event = EVENTS.CHAT_MESSAGE_REMOVE
-        }
-    }
+          // console.log(bcContext.Message.forwarded);
+          // console.log(bcContext.Message.attachments.photo);
 
-    if (event === '' && messageText !== '') {
-      event = chatId < 0 ? EVENTS.CHAT_MESSAGE_NEW : EVENTS.MESSAGE_NEW
-    }
+          break
 
-    bcContext.Message.chat = {
-      id: chatId,
-      type: chatType
+        case 'updateDeleteMessages':
+          if (ctx.update.fromCache) {
+            return
+          }
+          for (const type of ['updateDeleteMessages']) {
+            if (type in ctx.update) {
+              message = ctx.update[type]
+              break
+            }
+          }
+          // console.log(ctx.update, message)
+          // console.log(upd);
+          // console.log('MESSAGE CALLBACK. ID: ', message.id);
+          messageId = ctx.update.messageIds[0]
+          messageIds = ctx.update.messageIds
+          messageText = ''
+          messageDate = Math.round(Date.now() / 1000)
+          senderId = ctx.update.senderUserId || 0
+          chatId = ctx.update.chatId
+          event = EVENTS.MESSAGE_REMOVE
+          if (parseInt(chatId) < 0) {
+            chatType = ctx.update.isChannelPost ? 'channel' : 'chat'
+            event = EVENTS.CHAT_MESSAGE_REMOVE
+          }
+      }
+
+      if (event === '' && messageText !== '') {
+        event = chatId < 0 ? EVENTS.CHAT_MESSAGE_NEW : EVENTS.MESSAGE_NEW
+      }
+
+      bcContext.Message.chat = {
+        id: chatId,
+        type: chatType
+      }
+      bcContext.Message.sender = {
+        id: senderId,
+        isBot
+      }
+      bcContext.Message.id = messageId
+      bcContext.Message.ids = messageIds
+      bcContext.Message.date = messageDate
+      bcContext.Message.text = messageText
+      bcContext.Message.edited = edited
+      bcContext.Message.event = event
+      bcContext.Message.reply.id = replyId
+      let result
+      if (event !== '') {
+        // console.log('MESSAGE CALLBACK. MSG EVENT ', event, ' ID ', messageId);
+        result = bcContext.process().catch(e => { console.error('[TGPVT ' + this.name + '] ERROR IN CTX PROCESS:', e) })
+      }
+      if (this.config.readProcessed && chatId && messageId) {
+        setTimeout(
+          () => this.Transport.api.viewMessages({
+            chatId,
+            messageIds: [messageId],
+            forceRead: true
+          }).then(/* (res) => console.log(res) */),
+          0
+        )
+      }
+      return result
+    } catch (e) {
+      console.error('[TGPVT ' + this.name + '] ERROR WHILE PREPARE OR PROCESSING UPDATE:', e)
+      return null
     }
-    bcContext.Message.sender = {
-      id: senderId,
-      isBot
-    }
-    bcContext.Message.id = messageId
-    bcContext.Message.ids = messageIds
-    bcContext.Message.date = messageDate
-    bcContext.Message.text = messageText
-    bcContext.Message.edited = edited
-    bcContext.Message.event = event
-    bcContext.Message.reply.id = replyId
-    let result
-    if (event !== '') {
-      // console.log('MESSAGE CALLBACK. MSG EVENT ', event, ' ID ', messageId);
-      result = bcContext.process()
-    }
-    if (this.config.readProcessed && chatId && messageId) {
-      this.Transport.api.viewMessages({
-        chatId,
-        messageIds: [messageId],
-        forceRead: true
-      }).then(/* (res) => console.log(res) */)
-    }
-    return result
   }
 
   listen () {
