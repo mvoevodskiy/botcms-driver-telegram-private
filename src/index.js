@@ -452,7 +452,7 @@ class TelegramPrivate {
     await this.getMe()
     await this.Transport.api.getChats({
       chatList: { _: 'chatListMain' },
-      limit: 500
+      limit: 50
     })
     if (this.config.alwaysOnline) {
       setTimeout(this.setOnline, 0)
